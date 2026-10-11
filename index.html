@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Melbourne, the Local Way — An Insider's Guide</title>
+<meta name="description" content="A friend's insider guide to Melbourne: things to do, suburbs, food, coffee, bars and day trips.">
+<script>window.__errors=[];window.addEventListener('error',function(e){window.__errors.push(String(e.message||e));});</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<style>
+:root{
+  --bg:#faf5ee; --paper:#fffdf9; --ink:#2b211c; --muted:#7a6a5f; --line:#eadfd2;
+  --brick:#b5452b; --terracotta:#d0643c; --ochre:#d99a2b; --olive:#6b7a3a; --plum:#7b3b5e; --teal:#2f6f73; --coffee:#6b4430; --navy:#2e3f66;
+  --radius:18px; --shadow:0 1px 2px rgba(60,40,20,.06),0 8px 24px rgba(60,40,20,.08);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:Fraunces,Georgia,serif;letter-spacing:-.01em;margin:0}
+a{color:var(--brick)}
+/* HERO */
+.hero{position:relative;overflow:hidden;color:#fff8ef;padding:clamp(48px,9vw,110px) clamp(20px,5vw,64px) clamp(40px,6vw,72px);
+  background:
+    radial-gradient(1200px 500px at 85% -10%,rgba(217,154,43,.55),transparent 60%),
+    radial-gradient(900px 500px at -10% 110%,rgba(123,59,94,.55),transparent 60%),
+    linear-gradient(135deg,#3a2419 0%,#7a3220 45%,#b5452b 100%);}
+.hero::after{content:"";position:absolute;inset:0;background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.04) 0 1px,transparent 1px 64px),repeating-linear-gradient(0deg,rgba(255,255,255,.04) 0 1px,transparent 1px 64px);pointer-events:none}
+.hero-inner{position:relative;z-index:1;max-width:1100px}
+.eyebrow{display:inline-flex;gap:8px;align-items:center;font-size:.78rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);padding:6px 12px;border-radius:999px;backdrop-filter:blur(4px)}
+.hero h1{font-size:clamp(2.6rem,7vw,5.4rem);font-weight:800;line-height:1.02;margin:18px 0 14px}
+.hero h1 em{font-style:italic;font-weight:400;color:#ffd79a}
+.hero p.lede{font-size:clamp(1.02rem,1.6vw,1.25rem);max-width:640px;opacity:.92;margin:0 0 26px}
+.hero-stats{display:flex;flex-wrap:wrap;gap:10px}
+.hero-stats a{color:#fff8ef;text-decoration:none;font-weight:600;font-size:.92rem;padding:10px 16px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);transition:.2s}
+.hero-stats a:hover{background:rgba(255,255,255,.22)}
+.tram{position:absolute;right:-20px;bottom:-8px;width:min(46vw,520px);opacity:.18;z-index:0}
+/* NAV */
+.topbar{position:sticky;top:0;z-index:1000;background:rgba(250,245,238,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topbar-inner{max-width:1400px;margin:0 auto;padding:12px clamp(14px,3vw,28px);display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.search{flex:1 1 240px;position:relative}
+.search input{width:100%;font:inherit;font-size:.95rem;padding:11px 14px 11px 40px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--ink);outline:none;transition:.15s}
+.search input:focus{border-color:var(--terracotta);box-shadow:0 0 0 4px rgba(208,100,60,.15)}
+.search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);opacity:.5}
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;flex:1 1 100%;padding-bottom:2px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;font:inherit;font-size:.86rem;font-weight:600;cursor:pointer;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:7px 13px;border-radius:999px;display:inline-flex;align-items:center;gap:7px;transition:.15s}
+.chip .dot{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.chip .n{font-weight:500;color:var(--muted);font-size:.78rem}
+.chip:hover{border-color:var(--c,var(--terracotta))}
+.chip[aria-pressed="true"]{background:var(--c,var(--ink));border-color:var(--c,var(--ink));color:#fff}
+.chip[aria-pressed="true"] .dot{background:#fff}
+.chip[aria-pressed="true"] .n{color:rgba(255,255,255,.8)}
+/* LAYOUT */
+.explore{max-width:1400px;margin:0 auto;padding:18px clamp(14px,3vw,28px) 10px;display:grid;grid-template-columns:minmax(340px,440px) 1fr;gap:20px}
+.map-wrap{position:sticky;top:122px;height:calc(100vh - 140px);min-height:420px;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--line);order:2}
+#map{width:100%;height:100%;background:#efe6da}
+.warm-tiles{filter:sepia(.22) saturate(.85) brightness(1.02) contrast(.95)}
+.map-actions{position:absolute;z-index:500;right:12px;bottom:14px;display:flex;gap:8px}
+.map-actions button{font:inherit;font-size:.82rem;font-weight:600;border:0;background:var(--paper);color:var(--ink);padding:9px 13px;border-radius:999px;box-shadow:var(--shadow);cursor:pointer}
+.map-actions button:hover{background:#fff}
+.list{order:1;display:flex;flex-direction:column;gap:12px;padding-bottom:20px}
+.list-meta{font-size:.85rem;color:var(--muted);display:flex;justify-content:space-between;align-items:center;padding:0 4px}
+.list-meta button{font:inherit;font-size:.82rem;border:0;background:none;color:var(--brick);cursor:pointer;font-weight:600}
+.group-title{font-family:Fraunces,serif;font-size:1.25rem;font-weight:600;margin:12px 4px 0;display:flex;align-items:center;gap:10px}
+.group-title .dot{width:12px;height:12px;border-radius:50%;background:var(--c)}
+.card{background:var(--paper);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:14px;padding:14px 16px 14px;cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s;box-shadow:0 1px 2px rgba(60,40,20,.04);scroll-margin:140px}
+.card:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.card.active{box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 35%,transparent),var(--shadow);transform:translateY(-1px)}
+.card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.card h3{font-size:1.12rem;font-weight:600;line-height:1.25}
+.card .where{font-size:.8rem;color:var(--muted);margin-top:2px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.badge{font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:color-mix(in srgb,var(--c) 14%,#fff);color:var(--c);white-space:nowrap}
+.approx{font-size:.68rem;font-weight:600;padding:2px 7px;border-radius:999px;border:1px dashed var(--muted);color:var(--muted)}
+.fav{font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:999px;background:#ffe7b3;color:#7a4b00}
+.note{margin:8px 0 10px;font-size:.93rem}
+.note::before{content:"“";font-family:Fraunces,serif;color:var(--c);font-size:1.3em;line-height:0;margin-right:2px}
+.note::after{content:"”";font-family:Fraunces,serif;color:var(--c);font-size:1.3em;line-height:0;margin-left:1px}
+.card-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;font-weight:600;text-decoration:none;padding:7px 12px;border-radius:999px;border:1px solid var(--line);color:var(--ink);background:#fff;cursor:pointer;font-family:inherit}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.primary:hover{background:var(--brick);border-color:var(--brick)}
+.btn:hover{border-color:var(--ink)}
+.empty{padding:30px;text-align:center;color:var(--muted);background:var(--paper);border:1px dashed var(--line);border-radius:14px}
+/* markers */
+.pin{width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--c);border:2.5px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.pin span{transform:rotate(45deg);font-size:14px;line-height:1}
+.pin.approx-pin{border-style:dashed}
+.pin-wrap.active .pin{transform:rotate(-45deg) scale(1.35);box-shadow:0 0 0 6px color-mix(in srgb,var(--c) 30%,transparent),0 4px 10px rgba(0,0,0,.35)}
+.pin-wrap.active{z-index:9999!important}
+.leaflet-popup-content-wrapper{border-radius:14px;font-family:Inter,sans-serif}
+.leaflet-popup-content{margin:12px 14px}
+.pop h4{font-family:Fraunces,serif;font-size:1.05rem;margin:0 0 2px}
+.pop p{margin:4px 0 8px;font-size:.85rem;color:#4a3b32}
+.pop a{font-weight:600;font-size:.82rem}
+/* SECTIONS */
+section.band{max-width:1400px;margin:0 auto;padding:clamp(36px,6vw,70px) clamp(14px,3vw,28px)}
+.band h2{font-size:clamp(1.8rem,3.5vw,2.6rem);font-weight:800;margin-bottom:6px}
+.band .sub{color:var(--muted);margin:0 0 26px;max-width:640px}
+.trips{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.trip{position:relative;border-radius:var(--radius);overflow:hidden;color:#fff;padding:24px 22px 22px;min-height:260px;display:flex;flex-direction:column;justify-content:flex-end;box-shadow:var(--shadow)}
+.trip .emoji{position:absolute;top:18px;right:20px;font-size:2.4rem;opacity:.9}
+.trip .tag{font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.85}
+.trip h3{font-size:1.6rem;margin:6px 0 8px}
+.trip p{margin:0 0 14px;opacity:.95;font-size:.95rem}
+.trip .row{display:flex;gap:8px;flex-wrap:wrap}
+.trip .btn{background:rgba(255,255,255,.95);border:0}
+.trip .btn.ghost{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4)}
+.t1{background:linear-gradient(160deg,#2e3f66,#1d2742 70%)}
+.t2{background:linear-gradient(160deg,#2f6f73,#1c4448 70%)}
+.t3{background:linear-gradient(160deg,#d0643c,#8f3a1f 70%)}
+.tips{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.tip{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px 18px 16px}
+.tip .ic{font-size:1.6rem}
+.tip h3{font-size:1.1rem;margin:6px 0 4px}
+.tip p{margin:0;color:#4a3b32;font-size:.93rem}
+.dark{background:#2b211c;color:#f6ecdf}
+.dark .sub{color:#c9b6a5}
+.dark .tip{background:#36291f;border-color:#4a3a2e}
+.dark .tip p{color:#e0d1c2}
+footer{text-align:center;color:var(--muted);font-size:.82rem;padding:28px 16px 40px}
+/* RESPONSIVE */
+@media (max-width:900px){
+  .explore{grid-template-columns:1fr}
+  .map-wrap{order:1;position:relative;top:auto;height:52vh;min-height:320px}
+  .list{order:2}
+  .tram{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <svg class="tram" viewBox="0 0 520 200" fill="none" stroke="#fff" stroke-width="4" aria-hidden="true">
+    <rect x="20" y="50" width="480" height="110" rx="22"/><line x1="20" y1="90" x2="500" y2="90"/>
+    <rect x="50" y="62" width="60" height="22" rx="4"/><rect x="130" y="62" width="60" height="22" rx="4"/><rect x="210" y="62" width="60" height="22" rx="4"/><rect x="290" y="62" width="60" height="22" rx="4"/><rect x="370" y="62" width="60" height="22" rx="4"/>
+    <circle cx="110" cy="172" r="16"/><circle cx="410" cy="172" r="16"/><line x1="260" y1="50" x2="300" y2="6"/><line x1="0" y1="190" x2="520" y2="190"/>
+  </svg>
+  <div class="hero-inner">
+    <span class="eyebrow">☕ A friend's guide · Naarm / Melbourne, VIC</span>
+    <h1>Melbourne,<br><em>the local way.</em></h1>
+    <p class="lede">Laneway coffee, rooftop drinks, tram-carriage burgers and penguins at sunset. Everything here is a personal recommendation. Tap a card to find it on the map, or open it straight in Google Maps.</p>
+    <nav class="hero-stats" aria-label="Sections">
+      <a href="#explore">🗺️ Explore the map</a>
+      <a href="#daytrips">🚗 Day trips</a>
+      <a href="#tips">💡 Pro tips</a>
+    </nav>
+  </div>
+</header>
+
+<div class="topbar" id="explore">
+  <div class="topbar-inner">
+    <label class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Search places, suburbs, tips… (e.g. dumplings, rooftop, Fitzroy)" aria-label="Search places">
+    </label>
+    <div class="chips" id="chips" role="toolbar" aria-label="Filter by category"></div>
+  </div>
+</div>
+
+<main class="explore">
+  <div class="map-wrap">
+    <div id="map" role="region" aria-label="Map of recommended places"></div>
+    <div class="map-actions">
+      <button id="fitCity" type="button">City view</button>
+      <button id="fitAll" type="button">Show all</button>
+    </div>
+  </div>
+  <div class="list" id="list" aria-live="polite"></div>
+</main>
+
+<section class="band" id="daytrips">
+  <h2>Day trips 🚗</h2>
+  <p class="sub">Get out of the city for a day. Hire a car, or book a tour, and leave early.</p>
+  <div class="trips">
+    <article class="trip t1">
+      <span class="emoji">🐧</span>
+      <span class="tag">Phillip Island · Evening</span>
+      <h3>Penguin Parade</h3>
+      <p>See the penguins and sit on the beach as they walk up to their holes. Can't make the trip? You can see the same thing in the city at St Kilda (pier/breakwater).</p>
+      <div class="row">
+        <a class="btn" target="_blank" rel="noopener" data-gmaps="Penguin Parade Phillip Island VIC">Open in Google Maps ↗</a>
+        <button class="btn ghost" data-fly="penguin-parade">Show on map</button>
+      </div>
+    </article>
+    <article class="trip t2">
+      <span class="emoji">🌊</span>
+      <span class="tag">~1.5 hrs from Melbourne · Full day</span>
+      <h3>Great Ocean Road</h3>
+      <p>About 1.5 hours from Melbourne to the start. Make it a full day trip: coastal drive, lookouts and beach towns.</p>
+      <div class="row">
+        <a class="btn" target="_blank" rel="noopener" data-gmaps="Great Ocean Road VIC">Open in Google Maps ↗</a>
+        <button class="btn ghost" data-fly="great-ocean-road">Show on map</button>
+      </div>
+    </article>
+    <article class="trip t3">
+      <span class="emoji">🏄</span>
+      <span class="tag">Near Torquay · For surfers</span>
+      <h3>Bells Beach</h3>
+      <p>If he likes surfing: world famous. Many famous surf brands started around here, and it hosts a world surfing competition. It's on the way to the Great Ocean Road, so you can do both.</p>
+      <div class="row">
+        <a class="btn" target="_blank" rel="noopener" data-gmaps="Bells Beach VIC">Open in Google Maps ↗</a>
+        <button class="btn ghost" data-fly="bells-beach">Show on map</button>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="band dark" id="tips" style="max-width:none">
+  <div style="max-width:1400px;margin:0 auto">
+    <h2>Pro tips 💡</h2>
+    <p class="sub">How to do Melbourne like someone who lives here.</p>
+    <div class="tips">
+      <div class="tip"><div class="ic">🍸</div><h3>Ask the bartender</h3><p>Ask any bartender for recommendations. Aussies love this. They'll often send you to the next great bar.</p></div>
+      <div class="tip"><div class="ic">☕</div><h3>Ask the barista too</h3><p>New coffee places keep popping up. Ask baristas where they're drinking right now.</p></div>
+      <div class="tip"><div class="ic">🥟</div><h3>Juicy Bao table rules</h3><p>Order the bao buns and the pork & chive dumplings, and use the soy sauce and black vinegar on the table.</p></div>
+      <div class="tip"><div class="ic">🚶</div><h3>Pair Degraves with Dukes</h3><p>Degraves Street is nice to see but the food isn't great. It's near Dukes Coffee, so do both at once.</p></div>
+      <div class="tip"><div class="ic">🍗</div><h3>Get a parma at a pub</h3><p>Chicken parmigiana at a pub is a Melbourne rite of passage. Try one at any of the pubs listed.</p></div>
+      <div class="tip"><div class="ic">🌅</div><h3>St Kilda evening</h3><p>See the little penguins at St Kilda, then go to Chronicles Bar: one of the coolest bars, with great bartenders and vibe.</p></div>
+      <div class="tip"><div class="ic">🥃</div><h3>Try Australian whisky</h3><p>Starward is Australian whisky and one of the best in the world. Whisky & Alement is the spot for a whisky bar.</p></div>
+      <div class="tip"><div class="ic">📍</div><h3>About the pins</h3><p>Pins with a dashed outline are approximate (suburb or area level). Always use "Open in Google Maps" for exact directions and current hours.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>Made with ♥ for a trip to Melbourne · Basemap tiles © <a href="https://www.esri.com/" target="_blank" rel="noopener">Esri</a> (alternatives: <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>, OpenTopoMap) · Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors · Opening hours change, so check before you go.</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script>
+(function(){
+"use strict";
+var CATS = {
+  todo:   {label:"Things to do", color:"#2f6f73", icon:"⭐"},
+  suburb: {label:"Suburbs",      color:"#6b7a3a", icon:"🏘️"},
+  food:   {label:"Food",         color:"#d0643c", icon:"🍴"},
+  coffee: {label:"Coffee",       color:"#6b4430", icon:"☕"},
+  bar:    {label:"Bars",         color:"#7b3b5e", icon:"🍸"},
+  pub:    {label:"Pubs & brews", color:"#d99a2b", icon:"🍺"},
+  trip:   {label:"Day trips",    color:"#2e3f66", icon:"🚗"}
+};
+// approx:true = suburb/area-level or uncertain venue location
+var PLACES = [
+ // THINGS TO DO
+ {id:"queen-vic-market",name:"Queen Victoria Market",cat:"todo",area:"CBD",lat:-37.8076,lng:144.9568,note:"Queen Victoria Market. A Melbourne classic for wandering, snacking and shopping."},
+ {id:"degraves-st",name:"Degraves Street",cat:"todo",area:"CBD",lat:-37.8170,lng:144.9654,note:"Nice to see, but the food isn't great. It's near Dukes Coffee, so do both at once."},
+ {id:"abbotsford-convent",name:"Abbotsford Convent",cat:"todo",area:"Abbotsford",lat:-37.8025,lng:145.0036,note:"Nice convent. Walk around the river."},
+ {id:"st-kilda-penguins",name:"St Kilda Pier (little penguins)",cat:"todo",area:"St Kilda",lat:-37.8636,lng:144.9625,q:"St Kilda Pier Melbourne VIC",approx:true,note:"Same as the Phillip Island penguin parade, but in the city: see the penguins at St Kilda."},
+ // DAY TRIPS
+ {id:"penguin-parade",name:"Phillip Island Penguin Parade",cat:"trip",area:"Phillip Island",lat:-38.5096,lng:145.1497,q:"Penguin Parade Phillip Island VIC",note:"See the penguins and sit on the beach as they walk up to their holes."},
+ {id:"great-ocean-road",name:"Great Ocean Road",cat:"trip",area:"Surf Coast (Torquay onwards)",lat:-38.4630,lng:144.0960,q:"Great Ocean Road VIC",approx:true,note:"1.5 hrs from Melbourne. Full day trip."},
+ {id:"bells-beach",name:"Bells Beach",cat:"trip",area:"Near Torquay",lat:-38.3687,lng:144.2826,q:"Bells Beach VIC",note:"If he likes surfing: world famous, many famous brands started there, and it hosts a world surfing competition."},
+ // SUBURBS
+ {id:"cbd",name:"City (CBD)",cat:"suburb",area:"Melbourne CBD",lat:-37.8136,lng:144.9631,q:"Melbourne CBD VIC",approx:true,note:"The city centre. Laneways, coffee, Chinatown and lots of the bars below."},
+ {id:"fitzroy",name:"Fitzroy",cat:"suburb",area:"Main street: Brunswick St",lat:-37.7990,lng:144.9784,q:"Brunswick Street Fitzroy VIC",approx:true,note:"Food and bars. Main street is Brunswick St."},
+ {id:"collingwood",name:"Collingwood",cat:"suburb",area:"Main street: Smith St",lat:-37.8015,lng:144.9837,q:"Smith Street Collingwood VIC",approx:true,note:"Food and bars. Smith St."},
+ {id:"south-yarra",name:"South Yarra",cat:"suburb",area:"Main street: Chapel St",lat:-37.8390,lng:144.9930,q:"Chapel Street South Yarra VIC",approx:true,note:"Food and bars. Chapel St."},
+ {id:"st-kilda",name:"St Kilda",cat:"suburb",area:"Beachside",lat:-37.8676,lng:144.9790,q:"St Kilda Melbourne VIC",approx:true,note:"Beachside tourist neighbourhood. The quintessential Melbourne beach suburb."},
+ {id:"brunswick",name:"Brunswick",cat:"suburb",area:"Inner north",lat:-37.7667,lng:144.9600,q:"Brunswick Melbourne VIC",approx:true,note:"Funky, grungy. Bars and food."},
+ // FOOD
+ {id:"easeys",name:"Easey's",cat:"food",area:"Collingwood",lat:-37.7990,lng:144.9893,note:"Burgers inside tram carriages on top of an apartment building."},
+ {id:"kariton",name:"Kariton Sorbetes",cat:"food",area:"CBD",lat:-37.8120,lng:144.9640,approx:true,note:"Filipino ice cream in the city."},
+ {id:"hectors-cbd",name:"Hector's Deli (City)",cat:"food",area:"CBD",lat:-37.8150,lng:144.9600,q:"Hector's Deli Melbourne VIC",approx:true,note:"In the city or Richmond. Chicken schnitzel sandwich, good coffee."},
+ {id:"hectors-richmond",name:"Hector's Deli (Richmond)",cat:"food",area:"Richmond",lat:-37.8210,lng:145.0010,q:"Hector's Deli Richmond VIC",approx:true,note:"In the city or Richmond. Chicken schnitzel sandwich, good coffee."},
+ {id:"lune",name:"Lune",cat:"food",area:"Fitzroy",lat:-37.7985,lng:144.9797,q:"Lune Croissanterie Melbourne VIC",approx:true,note:"Croissants."},
+ {id:"parma",name:"Chicken parmigiana at a pub",cat:"food",area:"Any good pub",lat:-37.8100,lng:144.9700,q:"chicken parmigiana pub Melbourne VIC",approx:true,note:"Chicken parmigiana at a pub. Try one at any of the pubs on this list."},
+ {id:"tipo00",name:"Tipo 00",cat:"food",area:"CBD · Fancy",lat:-37.8130,lng:144.9619,fancy:true,note:"Fancy. Pasta in the city."},
+ {id:"gimlet",name:"Gimlet",cat:"food",area:"CBD · Fancy",lat:-37.8158,lng:144.9697,q:"Gimlet at Cavendish House Melbourne VIC",fancy:true,note:"Fancy. Go for the steak."},
+ {id:"embla",name:"Embla",cat:"food",area:"CBD · Fancy",lat:-37.8133,lng:144.9688,fancy:true,note:"Fancy. Also a great wine bar."},
+ {id:"farmers-daughter",name:"Farmer's Daughter",cat:"food",area:"CBD · Fancy",lat:-37.8141,lng:144.9718,fancy:true,approx:true,note:"Fancy."},
+ {id:"juicy-bao",name:"Juicy Bao",cat:"food",area:"Chinatown, CBD",lat:-37.8118,lng:144.9668,approx:true,note:"Bao buns and pork and chive dumplings. Use the soy sauce and black vinegar on the table."},
+ // COFFEE
+ {id:"dukes",name:"Dukes Coffee Roasters",cat:"coffee",area:"CBD (Flinders Lane)",lat:-37.8165,lng:144.9652,fav:true,note:"Absolute favourite. Near Degraves Street, so do both at once."},
+ {id:"patricia",name:"Patricia Coffee Brewers",cat:"coffee",area:"CBD",lat:-37.8146,lng:144.9585,note:"Patricia Coffee in the city."},
+ {id:"baba-budan",name:"Brother Baba Budan",cat:"coffee",area:"CBD",lat:-37.8131,lng:144.9626,note:"Classic city coffee. Ask baristas for recommendations, as new places have popped up."},
+ // BARS
+ {id:"whisky-alement",name:"Whisky & Alement",cat:"bar",area:"CBD · Whisky",lat:-37.8098,lng:144.9665,note:"Whisky."},
+ {id:"starward",name:"Starward",cat:"bar",area:"Port Melbourne · Whisky",lat:-37.8300,lng:144.9300,q:"Starward Whisky Melbourne VIC",approx:true,note:"Australian whisky, one of the best in the world."},
+ {id:"caretakers",name:"Caretaker's Cottage",cat:"bar",area:"CBD · Cocktails",lat:-37.8114,lng:144.9714,note:"Cocktails. Ask any bartender for recommendations. Aussies love this."},
+ {id:"above-board",name:"Above Board",cat:"bar",area:"Collingwood · Cocktails",lat:-37.7972,lng:144.9840,approx:true,note:"Cocktails. Ask any bartender for recommendations. Aussies love this."},
+ {id:"black-pearl",name:"Black Pearl",cat:"bar",area:"Fitzroy · Cocktails",lat:-37.7976,lng:144.9785,q:"Black Pearl Fitzroy Melbourne VIC",note:"Cocktails. Ask any bartender for recommendations. Aussies love this."},
+ {id:"beneath-driver",name:"Beneath Driver Lane",cat:"bar",area:"CBD · Cocktails",lat:-37.8150,lng:144.9652,note:"Cocktails. Ask any bartender for recommendations. Aussies love this."},
+ {id:"goldilocks",name:"Goldilocks",cat:"bar",area:"CBD · Rooftop",lat:-37.8113,lng:144.9641,note:"Rooftop."},
+ {id:"naked-for-satan",name:"Naked for Satan",cat:"bar",area:"Fitzroy · Rooftop",lat:-37.7982,lng:144.9783,note:"Rooftop, on Brunswick St."},
+ {id:"union-electric",name:"Union Electric",cat:"bar",area:"CBD (Chinatown) · Rooftop",lat:-37.8113,lng:144.9668,note:"Rooftop."},
+ {id:"chronicles",name:"Chronicles Bar",cat:"bar",area:"St Kilda",lat:-37.8600,lng:144.9790,q:"Chronicles Bar St Kilda VIC",approx:true,fav:true,note:"One of the coolest bars. Great bartenders and vibe. Do it when in St Kilda."},
+ // PUBS & BREWERY
+ {id:"bodriggy",name:"Bodriggy Brewing",cat:"pub",area:"Abbotsford · Brewery",lat:-37.8005,lng:144.9968,q:"Bodriggy Brewing Abbotsford VIC",note:"Brewery in Abbotsford."},
+ {id:"the-lincoln",name:"The Lincoln",cat:"pub",area:"Carlton · Pub",lat:-37.8010,lng:144.9658,q:"The Lincoln Carlton Melbourne VIC",note:"Pub."},
+ {id:"goldys",name:"Goldys Tavern",cat:"pub",area:"Pub · location unconfirmed",lat:-37.8125,lng:144.9600,approx:true,note:"Pub. (Name kept as written; check the exact spot in Google Maps.)"},
+ {id:"marquis-of-lorne",name:"Marquis of Lorne",cat:"pub",area:"Fitzroy · Pub",lat:-37.8001,lng:144.9810,q:"Marquis of Lorne Fitzroy Melbourne VIC",note:"Pub."},
+ {id:"drunken-poet",name:"The Drunken Poet",cat:"pub",area:"West Melbourne · Pub",lat:-37.8055,lng:144.9562,note:"Pub. Right by Queen Victoria Market."}
+];
+
+function gmaps(q){return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(q);}
+PLACES.forEach(function(p){ if(!p.q) p.q = p.name+" Melbourne VIC"; p.url = gmaps(p.q); });
+document.querySelectorAll("[data-gmaps]").forEach(function(a){a.href=gmaps(a.getAttribute("data-gmaps"));});
+
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+
+// MAP
+var map = L.map("map",{zoomControl:true,scrollWheelZoom:true}).setView([-37.8136,144.9631],13);
+// Basemaps: providers that work without a Referer header (file://) come first.
+var osmAttr='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+var esriAttr='Tiles &copy; <a href="https://www.esri.com/">Esri</a> &mdash; Esri, HERE, Garmin, USGS, NGA, EPA, NPS, '+osmAttr;
+var cartoAttr=osmAttr+' &copy; <a href="https://carto.com/attributions">CARTO</a>';
+var PROVIDERS=[
+  {name:"Esri Streets",layer:L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",{attribution:esriAttr,maxZoom:19,maxNativeZoom:19,className:"warm-tiles"})},
+  {name:"Esri Topo",layer:L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",{attribution:esriAttr,maxZoom:19,maxNativeZoom:19,className:"warm-tiles"})},
+  {name:"Esri Satellite",layer:L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{attribution:'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',maxZoom:19,maxNativeZoom:19})},
+  {name:"Carto Voyager",layer:L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{attribution:cartoAttr,subdomains:"abcd",maxZoom:20})},
+  {name:"OpenTopoMap",layer:L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",{attribution:osmAttr+', SRTM | Style &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)',subdomains:"abc",maxZoom:17})},
+  {name:"OpenStreetMap",layer:L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:osmAttr,maxZoom:19})}
+];
+// Auto-fallback: if the current provider errors repeatedly before enough tiles load, switch to the next one.
+// Satellite and Carto are manual-only: Carto serves an "API key required" image (HTTP 200, no tileerror) to file:// pages.
+var AUTO=[0,1,4,5], current=0, manual=false, autoSwitching=false;
+PROVIDERS.forEach(function(pv,i){
+  pv.errors=0; pv.loads=0;
+  pv.layer.on("tileload",function(){pv.loads++;});
+  pv.layer.on("tileerror",function(){
+    pv.errors++;
+    if(manual||i!==current) return;
+    if(pv.errors>=4 && pv.errors>pv.loads){
+      var pos=AUTO.indexOf(i), next=AUTO[pos+1];
+      if(next===undefined) return;
+      if(window.console) console.warn("[map] "+pv.name+" tiles failing, switching to "+PROVIDERS[next].name);
+      autoSwitching=true; map.removeLayer(pv.layer); current=next; PROVIDERS[next].layer.addTo(map); autoSwitching=false;
+    }
+  });
+});
+PROVIDERS[0].layer.addTo(map);
+var baseLayers={}; PROVIDERS.forEach(function(pv){baseLayers[pv.name]=pv.layer;});
+L.control.layers(baseLayers,null,{position:"topright"}).addTo(map);
+map.on("baselayerchange",function(e){if(autoSwitching) return; manual=true;PROVIDERS.forEach(function(pv,i){if(pv.layer===e.layer) current=i;});});
+window.__tiles=function(){return PROVIDERS.map(function(p){return p.name+":"+p.loads+"/"+p.errors;}).join(" ")+" current="+PROVIDERS[current].name;};
+
+var markers={}, cards={}, activeId=null;
+PLACES.forEach(function(p){
+  var c=CATS[p.cat];
+  var icon=L.divIcon({className:"pin-wrap",html:'<div class="pin'+(p.approx?' approx-pin':'')+'" style="--c:'+c.color+'"><span>'+c.icon+'</span></div>',iconSize:[30,30],iconAnchor:[15,30],popupAnchor:[0,-28]});
+  var m=L.marker([p.lat,p.lng],{icon:icon,title:p.name,riseOnHover:true});
+  m.bindPopup('<div class="pop"><h4>'+esc(p.name)+'</h4><div style="font-size:.75rem;color:'+c.color+';font-weight:700;text-transform:uppercase;letter-spacing:.06em">'+esc(c.label)+(p.approx?' · approx. location':'')+'</div><p>'+esc(p.note)+'</p><a href="'+p.url+'" target="_blank" rel="noopener">Open in Google Maps ↗</a></div>');
+  m.on("click",function(){setActive(p.id,{scroll:true,fly:false});});
+  m.addTo(map);
+  markers[p.id]=m;
+});
+
+// CHIPS
+var state={cat:"all",q:""};
+var chipsEl=document.getElementById("chips");
+function counts(){var o={all:PLACES.length};PLACES.forEach(function(p){o[p.cat]=(o[p.cat]||0)+1;});return o;}
+var cnt=counts();
+function chip(key,label,color){
+  var b=document.createElement("button");b.className="chip";b.type="button";b.dataset.cat=key;
+  b.style.setProperty("--c",color);b.setAttribute("aria-pressed",key===state.cat?"true":"false");
+  b.innerHTML=(key==="all"?"":'<span class="dot"></span>')+esc(label)+' <span class="n">'+cnt[key]+'</span>';
+  b.addEventListener("click",function(){state.cat=key;chipsEl.querySelectorAll(".chip").forEach(function(x){x.setAttribute("aria-pressed",x.dataset.cat===key?"true":"false");});render(true);});
+  chipsEl.appendChild(b);
+}
+chip("all","All","#2b211c");
+Object.keys(CATS).forEach(function(k){chip(k,CATS[k].icon+" "+CATS[k].label,CATS[k].color);});
+
+// LIST
+var listEl=document.getElementById("list");
+function matches(p){
+  if(state.cat!=="all"&&p.cat!==state.cat) return false;
+  if(!state.q) return true;
+  var hay=(p.name+" "+p.area+" "+p.note+" "+CATS[p.cat].label).toLowerCase();
+  return state.q.split(/\s+/).every(function(t){return hay.indexOf(t)>-1;});
+}
+function render(refit){
+  var vis=PLACES.filter(matches);
+  listEl.innerHTML="";cards={};
+  var meta=document.createElement("div");meta.className="list-meta";
+  meta.innerHTML="<span><strong>"+vis.length+"</strong> of "+PLACES.length+" places</span>"+((state.cat!=="all"||state.q)?'<button type="button" id="reset">Clear filters</button>':"");
+  listEl.appendChild(meta);
+  var r=meta.querySelector("#reset");
+  if(r) r.addEventListener("click",function(){state.cat="all";state.q="";document.getElementById("q").value="";chipsEl.querySelectorAll(".chip").forEach(function(x){x.setAttribute("aria-pressed",x.dataset.cat==="all"?"true":"false");});render(true);});
+  if(!vis.length){var e=document.createElement("div");e.className="empty";e.textContent="No places match. Try another search or category.";listEl.appendChild(e);}
+  Object.keys(CATS).forEach(function(k){
+    var items=vis.filter(function(p){return p.cat===k;});
+    if(!items.length) return;
+    var h=document.createElement("h2");h.className="group-title";h.style.setProperty("--c",CATS[k].color);
+    h.innerHTML='<span class="dot"></span>'+esc(CATS[k].label);listEl.appendChild(h);
+    items.forEach(function(p){
+      var c=CATS[p.cat];
+      var el=document.createElement("article");el.className="card"+(p.id===activeId?" active":"");el.tabIndex=0;el.id="card-"+p.id;
+      el.style.setProperty("--c",c.color);
+      el.innerHTML='<div class="card-head"><div><h3>'+esc(p.name)+'</h3><div class="where">📍 '+esc(p.area)+
+        (p.fav?' <span class="fav">★ Favourite</span>':'')+(p.approx?' <span class="approx" title="Pin is placed at the suburb/area level">approx. location</span>':'')+
+        '</div></div><span class="badge">'+esc(c.label)+'</span></div>'+
+        '<p class="note">'+esc(p.note)+'</p>'+
+        '<div class="card-actions"><a class="btn primary" href="'+p.url+'" target="_blank" rel="noopener">Open in Google Maps ↗</a><button class="btn" type="button" data-show>Show on map</button></div>';
+      el.addEventListener("click",function(ev){ if(ev.target.closest("a")) return; setActive(p.id,{fly:true,scroll:false}); });
+      el.addEventListener("keydown",function(ev){ if(ev.key==="Enter"&&!ev.target.closest("a")){ev.preventDefault();setActive(p.id,{fly:true});} });
+      listEl.appendChild(el);cards[p.id]=el;
+    });
+  });
+  // markers visibility
+  var bounds=[];
+  PLACES.forEach(function(p){var m=markers[p.id];var on=vis.indexOf(p)>-1;
+    if(on){if(!map.hasLayer(m)) m.addTo(map);bounds.push([p.lat,p.lng]);} else if(map.hasLayer(m)) map.removeLayer(m);});
+  if(refit&&bounds.length&&(state.cat!=="all"||state.q)){map.flyToBounds(bounds,{padding:[50,50],maxZoom:15,duration:.8});}
+}
+function setActive(id,opt){
+  opt=opt||{};
+  if(activeId&&markers[activeId]){var oe=markers[activeId].getElement();if(oe)oe.classList.remove("active");}
+  if(activeId&&cards[activeId]) cards[activeId].classList.remove("active");
+  activeId=id;
+  var p=PLACES.filter(function(x){return x.id===id;})[0]; if(!p) return;
+  var m=markers[id];
+  if(!map.hasLayer(m)) m.addTo(map);
+  if(opt.fly){
+    if(window.matchMedia("(max-width:900px)").matches) document.querySelector(".map-wrap").scrollIntoView({behavior:"smooth",block:"start"});
+    map.flyTo([p.lat,p.lng],p.cat==="trip"?11:(p.cat==="suburb"?14:16),{duration:.9});
+    map.once("moveend",function(){m.openPopup();});
+  } else { m.openPopup(); }
+  var me=m.getElement(); if(me) me.classList.add("active");
+  if(cards[id]){cards[id].classList.add("active"); if(opt.scroll) cards[id].scrollIntoView({behavior:"smooth",block:"nearest"});}
+}
+window.__setActive=setActive;
+
+var qEl=document.getElementById("q"),t;
+qEl.addEventListener("input",function(){clearTimeout(t);t=setTimeout(function(){state.q=qEl.value.trim().toLowerCase();render(true);},140);});
+
+document.getElementById("fitAll").addEventListener("click",function(){map.flyToBounds(PLACES.filter(matches).map(function(p){return [p.lat,p.lng];}),{padding:[40,40],duration:.8});});
+document.getElementById("fitCity").addEventListener("click",function(){map.flyTo([-37.8100,144.9700],13,{duration:.8});});
+document.querySelectorAll("[data-fly]").forEach(function(b){b.addEventListener("click",function(){
+  state.cat="all";state.q="";qEl.value="";chipsEl.querySelectorAll(".chip").forEach(function(x){x.setAttribute("aria-pressed",x.dataset.cat==="all"?"true":"false");});render(false);
+  document.getElementById("explore").scrollIntoView({behavior:"smooth"});
+  setTimeout(function(){setActive(b.getAttribute("data-fly"),{fly:true,scroll:true});},400);
+});});
+
+render(false);
+document.body.setAttribute("data-ready",String(Object.keys(markers).length));
+})();
+</script>
+</body>
+</html>
